@@ -19,17 +19,17 @@ roads <- sf::read_sf("shiny-resources/roads.gpkg")
 # layers
 all_layers <- c("Incursion risk", "Climatic suitability", "Establishment likelihood", "Tourist pathway", "Returning resident pathway", "Visiting friends & family pathway", "Sea cargo pathway", "Natural dispersal pathway", "Budwood pathway")
 
-data <-
+data_full <-
   aus_SA2 %>%
   tibble::as_tibble() %>%
   dplyr::select(-geom)
 
 org_counts <-
-  data %>%
+  data_full %>%
   dplyr::count(State) %>%
   dplyr::pull(n)
 
-names(org_counts) <- sort(unique(data$State))
+names(org_counts) <- sort(unique(data_full$State))
 
 ui <- shinyUI(
   navbarPage("Citrus Biosecurity",
@@ -109,7 +109,7 @@ server <- function(input, output, session){
   })
   
   tab <- reactive({
-    data <- data %>%
+    data <- data_full %>%
       dplyr::group_by(State) %>%
       dplyr::filter(.data[[input$select_filt]] >= quantile(.data[[input$select_filt]], .env$input$select_quant_dt)) %>%
       dplyr::arrange(State, dplyr::desc(.data[[input$select_filt]]))
@@ -122,8 +122,8 @@ server <- function(input, output, session){
     
     filt_states <- names(which(!(org_counts - counts == 0)))
     
-    data <- data %>%
-      filter(State %in% filt_states) 
+    data %>%
+      dplyr::filter(State %in% filt_states) 
   })
   
   output$table_ui <- renderUI({
