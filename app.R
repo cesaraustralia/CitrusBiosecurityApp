@@ -114,7 +114,7 @@ server <- function(input, output, session){
       mapview(map.types = "Esri.WorldStreetMap", 
               layer.name = input$select_map,
               zcol = input$select_map,
-              label = aus_SA2$SA2_NAME21,
+              label = aus_SA2_filt$SA2_NAME21,
               col.regions = viridis::inferno(n = ncols))
   })
   
