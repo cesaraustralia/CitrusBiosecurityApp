@@ -1,7 +1,11 @@
 library(shiny)
 library(shinythemes)
+library(shinycssloaders)
 library(leaflet)
 library(mapview)
+
+# load the switch code
+source("Rsource/SwitchButton.R")
 
 # render mapview doesn't work; this function works
 myRenderMapview <- function(expr, env = parent.frame(), quoted = FALSE){
@@ -57,13 +61,15 @@ ui <- shinyUI(
                ),
                
                # map prediction maps
-               uiOutput("maps")
+               uiOutput("maps") %>%
+                 withSpinner(color = "#2C3E50", type = 6)# "#0dc5c1"
                
              ),
              
              # Panel 2 -----------------------------------------------------------------
              tabPanel(
                "Top risk",
+               includeCSS("www/button.css"),
                
                splitLayout(
                  selectizeInput(inputId = "select_filt", 
@@ -71,6 +77,12 @@ ui <- shinyUI(
                                 options = list(dropdownParent = 'body',
                                                create = 0),
                                 choices = all_layers),
+                 
+                 switchButton(inputId = "state",
+                              label = "By state?",
+                              value = FALSE,
+                              col = "GB",
+                              type = "TF"),
                  
                  sliderInput(inputId = "select_quant_dt",
                              label = "Select cutoff (quantile)",
@@ -82,7 +94,8 @@ ui <- shinyUI(
                
                
                # filtered table
-               tableOutput("table_ui")
+               tableOutput("table_ui") %>%
+                 withSpinner(color = "#2C3E50", type = 6)# "#0dc5c1"
                
              )
   )
@@ -92,7 +105,7 @@ ui <- shinyUI(
 server <- function(input, output, session){
   
   map <- reactive({
-      aus_SA2 %>%
+    aus_SA2 %>%
       dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map)) %>%
       mapview(map.types = "Esri.WorldStreetMap", 
               layer.name = input$select_map,
@@ -109,10 +122,16 @@ server <- function(input, output, session){
   })
   
   tab <- reactive({
-    data <- data_full %>%
-      dplyr::group_by(State) %>%
-      dplyr::filter(.data[[input$select_filt]] >= quantile(.data[[input$select_filt]], .env$input$select_quant_dt)) %>%
-      dplyr::arrange(State, dplyr::desc(.data[[input$select_filt]]))
+    if(input$state){
+      data <- data_full %>%
+        dplyr::group_by(State) %>%
+        dplyr::filter(.data[[input$select_filt]] >= quantile(.data[[input$select_filt]], .env$input$select_quant_dt)) %>%
+        dplyr::arrange(State, dplyr::desc(.data[[input$select_filt]]))
+    } else {
+      data <- data_full %>%
+        dplyr::filter(.data[[input$select_filt]] >= quantile(.data[[input$select_filt]], .env$input$select_quant_dt)) %>%
+        dplyr::arrange(dplyr::desc(.data[[input$select_filt]]))
+    }
     
     counts <- data %>%
       dplyr::count(State) %>%
@@ -123,7 +142,7 @@ server <- function(input, output, session){
     filt_states <- names(which(!(org_counts - counts == 0)))
     
     data %>%
-      dplyr::filter(State %in% filt_states) 
+      dplyr::filter(State %in% filt_states)
   })
   
   output$table_ui <- renderUI({
