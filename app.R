@@ -14,7 +14,7 @@ myRenderMapview <- function(expr, env = parent.frame(), quoted = FALSE){
 # read layer
 aus_SA2 <- setNames(sf::read_sf("shiny-resources/aus_SA2.gpkg"), c("SA2_CODE21", "SA2_NAME21", "Region", "State", "Incursion risk", "Climatic suitability", "Establishment likelihood", "Tourist pathway", "Returning resident pathway", "Visiting friends & family pathway", "Sea cargo pathway", "Natural dispersal pathway", "Budwood pathway", "geom"))
 
-roads <- sf::read_sf("shiny-resources/roads.gpkg")
+# roads <- sf::read_sf("shiny-resources/roads.gpkg")
 
 # layers
 all_layers <- c("Incursion risk", "Climatic suitability", "Establishment likelihood", "Tourist pathway", "Returning resident pathway", "Visiting friends & family pathway", "Sea cargo pathway", "Natural dispersal pathway", "Budwood pathway")
@@ -92,15 +92,13 @@ ui <- shinyUI(
 server <- function(input, output, session){
   
   map <- reactive({
-    # mapview(map.types = "Esri.WorldStreetMap", roads, layer.name = "Roads", legend = FALSE, label = roads$name, hide = TRUE) +
-    #   aus_SA2 %>%
-    #   dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map)) %>%
-    #   mapview(layer.name = input$select_map,
-    #           zcol = input$select_map,
-    #           label = aus_SA2$SA2_NAME21,
-    #           col.regions = viridis::inferno(n = 100))
-    
-    mapview(map.types = "Esri.WorldStreetMap")
+      aus_SA2 %>%
+      dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map)) %>%
+      mapview(map.types = "Esri.WorldStreetMap", 
+              layer.name = input$select_map,
+              zcol = input$select_map,
+              label = aus_SA2$SA2_NAME21,
+              col.regions = viridis::inferno(n = 100))
   })
   
   # the maps
