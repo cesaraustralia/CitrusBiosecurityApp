@@ -12,8 +12,8 @@ myRenderMapview <- function(expr, env = parent.frame(), quoted = FALSE){
 }
 
 # read layer
-aus_SA2 <- sf::read_sf("shiny-resources/aus_SA2.gpkg") %>%
-  dplyr::select(SA2_CODE21, SA2_NAME21, Region, State, `Incursion risk`, `Climatic suitability`, `Establishment likelihood`, `Tourist pathway`, `Returning resident pathway`, `Visiting friends & family pathway`, `Sea cargo pathway`, `Natural dispersal pathway`, `Budwood pathway`)
+aus_SA2 <- setNames(sf::read_sf("shiny-resources/aus_SA2.gpkg"), c("SA2_CODE21", "SA2_NAME21", "Region", "State", "Incursion risk", "Climatic suitability", "Establishment likelihood", "Tourist pathway", "Returning resident pathway", "Visiting friends & family pathway", "Sea cargo pathway", "Natural dispersal pathway", "Budwood pathway", "geom"))
+
 roads <- sf::read_sf("shiny-resources/roads.gpkg")
 
 # layers
