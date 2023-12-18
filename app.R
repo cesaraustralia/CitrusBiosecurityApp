@@ -105,13 +105,17 @@ ui <- shinyUI(
 server <- function(input, output, session){
   
   map <- reactive({
-    aus_SA2 %>%
-      dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map)) %>%
+    aus_SA2_filt <- aus_SA2 %>%
+      dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map))
+      
+    ncols <- max(round(length(unique(aus_SA2_filt %>% dplyr::pull(input$select_map)))/10, 0), 2)
+    
+    aus_SA2_filt %>%
       mapview(map.types = "Esri.WorldStreetMap", 
               layer.name = input$select_map,
               zcol = input$select_map,
               label = aus_SA2$SA2_NAME21,
-              col.regions = viridis::inferno(n = 100))
+              col.regions = viridis::inferno(n = ncols))
   })
   
   # the maps
