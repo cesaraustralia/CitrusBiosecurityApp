@@ -107,7 +107,7 @@ server <- function(input, output, session){
   map <- reactive({
     aus_SA2_filt <- aus_SA2 %>%
       dplyr::filter(.data[[input$select_map]] >= quantile(.data[[input$select_map]], .env$input$select_quant_map))
-      
+    
     ncols <- max(round(length(unique(aus_SA2_filt %>% dplyr::pull(input$select_map)))/10, 0), 2)
     
     aus_SA2_filt %>%
@@ -158,9 +158,19 @@ server <- function(input, output, session){
   
   output$table <- DT::renderDT({tab()},
                                filter = "top",
+                               extensions = "Buttons",
                                options = list(
-                                 pageLength = 20
-                               ))
+                                 dom = 'l<"sep">Bfrtip',
+                                 buttons = list(
+                                   'csv',
+                                   'excel',
+                                   list(extend = "pdf",
+                                        pageSize = "A4",
+                                        orientation = "landscape")
+                                 ),
+                                 pageLength = 20,
+                                 lengthMenu = c(10,20,50,100)
+                               ), server = FALSE)
 }
 
 shinyApp(ui, server)
