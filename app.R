@@ -1,8 +1,15 @@
 library(shiny)
+library(shinyjs)
+library(shinyauthr)
 library(shinythemes)
 library(shinycssloaders)
 library(leaflet)
 library(mapview)
+
+options(shiny.jquery.version = 1)
+
+# source dataframe that holds usernames, passwords and permissions
+source("Rsource/credentials.R")
 
 # load the switch code
 source("Rsource/SwitchButton.R")
@@ -37,9 +44,21 @@ names(org_counts) <- sort(unique(data_full$State))
 
 ui <- shinyUI(
   navbarPage("Citrus Biosecurity",
-             selected = "Risk maps",
+             id = "mainpage",
              theme = shinytheme("flatly"),
              
+             tabPanel(
+               id = 'login_tab',
+               title = 'Login',
+               loginUI(
+                 id = "login",
+                 title = "Please log in",
+                 user_title = "User Name",
+                 pass_title = "Password",
+                 login_title = "Log in",
+                 error_message = "Invalid username or password!"
+               )
+             ),
              
              # Panel 1 -----------------------------------------------------------------
              tabPanel(
@@ -92,10 +111,11 @@ ui <- shinyUI(
                              round = -2)
                ),
                
-               
                # filtered table
                tableOutput("table_ui") %>%
-                 withSpinner(color = "#2C3E50", type = 6)# "#0dc5c1"
+                 withSpinner(color = "#2C3E50", type = 6), # "#0dc5c1"
+               
+               useShinyjs()
                
              )
   )
@@ -103,6 +123,35 @@ ui <- shinyUI(
 
 
 server <- function(input, output, session){
+  # log-in ------------------------------------------------------------------
+  # call login module supplying data frame,
+  # user and password cols and reactive trigger
+  credentials <- shinyauthr::loginServer(
+    id = "login",
+    data = user_base,
+    user_col = user,
+    pwd_col = password,
+    log_out = reactive(logout_init())
+  )
+  
+  # call the logout module with reactive trigger to hide/show
+  logout_init <- shinyauthr::logoutServer(id = "logout",
+                                          active = reactive(credentials()$user_auth))
+  
+  # open the app after authentication
+  observe({
+    
+    if(credentials()$user_auth) {
+      
+      shinyjs::removeClass(selector = "nav", class = "collapse")
+      removeTab(inputId = 'mainpage',
+                target = 'Login', session = getDefaultReactiveDomain())
+    } else {
+      shinyjs::addClass(selector = "nav", class = "collapse")
+    }
+  })
+  
+  user_info <- reactive({credentials()$info})
   
   map <- reactive({
     aus_SA2_filt <- aus_SA2 %>%
